@@ -1,4 +1,9 @@
 import React from "react";
+import Link from "next/link";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import TerrainIcon from "@mui/icons-material/Terrain";
+import WbSunnyIcon from "@mui/icons-material/WbSunny";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
 const locations = [
   {
@@ -70,42 +75,73 @@ const locations = [
 export default function LocationsPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <h2 className="text-3xl font-bold text-center mb-8 text-green-800">
-        Farming Locations in Bangladesh
-      </h2>
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {locations.map((loc) => (
-          <div
-            key={loc.id}
-            className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow border border-green-100"
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <Link 
+            href="/customer-home" 
+            className="flex items-center gap-2 text-gray-600 hover:text-green-700 transition-colors font-medium"
           >
-            <div className="h-48 bg-gray-200">
-              {loc.img ? (
-                <img
-                  src={loc.img}
-                  alt={loc.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500">
-                  No Image
+            <ArrowBackIcon /> Back to Home
+          </Link>
+        </div>
+
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-extrabold text-green-800 mb-4">
+            Farming Locations in Bangladesh
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+            Discover the diverse agricultural landscapes of Bangladesh, from the tea gardens of Sylhet to the mango orchards of Rajshahi.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {locations.map((loc) => (
+            <div
+              key={loc.id}
+              className="bg-white rounded-3xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 group"
+            >
+              <div className="h-56 bg-gray-200 relative overflow-hidden">
+                {loc.img ? (
+                  <img
+                    src={loc.img}
+                    alt={loc.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-100">
+                    <LocationOnIcon style={{ fontSize: 48, opacity: 0.5 }} />
+                    <span className="mt-2 font-medium">No Image Available</span>
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                  <h3 className="text-2xl font-bold text-white">{loc.name}</h3>
                 </div>
-              )}
-            </div>
-            <div className="p-5">
-              <h3 className="text-xl font-bold text-green-700">{loc.name}</h3>
-              <p className="text-gray-600 mt-2 text-sm">{loc.description}</p>
-              <div className="mt-4 space-y-1">
-                <p className="text-sm text-gray-700">
-                  <span className="font-semibold">Soil:</span> {loc.soil}
-                </p>
-                <p className="text-sm text-gray-700">
-                  <span className="font-semibold">Weather:</span> {loc.weather}
-                </p>
+              </div>
+              
+              <div className="p-6">
+                <p className="text-gray-600 mb-6 leading-relaxed">{loc.description}</p>
+                
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3 bg-green-50 p-3 rounded-xl">
+                    <TerrainIcon className="text-green-600 mt-1" fontSize="small" />
+                    <div>
+                      <span className="block text-xs font-bold text-green-800 uppercase tracking-wide">Soil Type</span>
+                      <span className="text-sm text-gray-700 font-medium">{loc.soil}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3 bg-orange-50 p-3 rounded-xl">
+                    <WbSunnyIcon className="text-orange-500 mt-1" fontSize="small" />
+                    <div>
+                      <span className="block text-xs font-bold text-orange-800 uppercase tracking-wide">Weather</span>
+                      <span className="text-sm text-gray-700 font-medium">{loc.weather}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

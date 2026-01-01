@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,12 +19,15 @@ const productSchema = z.object({
   nature: z.string().optional(),
 });
 
-export default function AddNewProductPage() {
+export default function EditProductPage() {
   const router = useRouter();
+  const params = useParams();
+  const { id } = params;
+  
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [farmerName, setFarmerName] = useState("");
   const [serverError, setServerError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const {
     register,
@@ -49,13 +52,35 @@ export default function AddNewProductPage() {
       return;
     }
 
-    try {
-      const farmer = JSON.parse(loggedFarmerStr);
-      setFarmerName(farmer.name);
-    } catch (e) {
-      router.push("/farmer-login");
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${id}`);
+        if (res.ok) {
+          const product = await res.json();
+          setValue("category", product.category);
+          setValue("title", product.title);
+          setValue("price", product.price);
+          setValue("details", product.details || "");
+          setValue("nature", product.nature || "");
+          if (product.img) {
+            setPreview(product.img);
+          }
+        } else {
+          toast.error("Failed to load product");
+          router.push("/farmer-homepage");
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+        toast.error("Error loading product");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchProduct();
     }
-  }, [router]);
+  }, [id, router, setValue]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -72,36 +97,27 @@ export default function AddNewProductPage() {
   const onSubmit = async (formData) => {
     setServerError("");
     
-    const loggedFarmerStr = localStorage.getItem("currentFarmer");
-    if (!loggedFarmerStr) {
-      toast.error("Please login again.");
-      return;
-    }
-    const farmer = JSON.parse(loggedFarmerStr);
-    const farmerId = farmer.id;
-
-    const saveProduct = async (imgData) => {
+    const updateProduct = async (imgData) => {
       try {
-        const res = await fetch('/api/products', {
-          method: 'POST',
+        const res = await fetch(`/api/products/${id}`, {
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             ...formData,
-            img: imgData,
-            farmerId
+            img: imgData || preview, // Use new image or existing preview
           }),
         });
 
         if (res.ok) {
-          toast.success(`${formData.category} product added successfully!`);
+          toast.success("Product updated successfully!");
           router.push("/farmer-homepage");
         } else {
           const data = await res.json();
-          setServerError(data.error || "Failed to add product");
-          toast.error(data.error || "Failed to add product");
+          setServerError(data.error || "Failed to update product");
+          toast.error(data.error || "Failed to update product");
         }
       } catch (error) {
-        console.error("Error adding product:", error);
+        console.error("Error updating product:", error);
         setServerError("Something went wrong!");
         toast.error("Something went wrong!");
       }
@@ -110,13 +126,21 @@ export default function AddNewProductPage() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        saveProduct(reader.result);
+        updateProduct(reader.result);
       };
       reader.readAsDataURL(file);
     } else {
-      saveProduct("");
+      updateProduct(null);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-slate-900 flex flex-col">
@@ -148,8 +172,8 @@ export default function AddNewProductPage() {
           className="bg-white w-full max-w-3xl rounded-3xl shadow-xl overflow-hidden border border-gray-100"
         >
           <div className="bg-green-600 p-8 text-white text-center">
-            <h2 className="text-3xl font-bold mb-2">Add New Product</h2>
-            <p className="text-green-100">Share your fresh produce with the world</p>
+            <h2 className="text-3xl font-bold mb-2">Edit Product</h2>
+            <p className="text-green-100">Update your product details</p>
           </div>
 
           <div className="p-8 md:p-10">
@@ -250,10 +274,10 @@ export default function AddNewProductPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Publishing...
+                    Updating...
                   </span>
                 ) : (
-                  "Publish Product"
+                  "Update Product"
                 )}
               </button>
             </form>

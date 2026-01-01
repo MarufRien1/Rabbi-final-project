@@ -3,18 +3,22 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import SearchIcon from "@mui/icons-material/Search";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import LogoutIcon from "@mui/icons-material/Logout";
 import SecurityIcon from "@mui/icons-material/Security";
+import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
 
 export default function CustomerHomePage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchError, setSearchError] = useState(false);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -27,154 +31,158 @@ export default function CustomerHomePage() {
         }
       } catch (error) {
         console.error("Error fetching products:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchProducts();
   }, []);
 
-  const handleSearch = () => {
+  useEffect(() => {
     const term = searchTerm.trim().toLowerCase();
     if (!term) {
       setFilteredProducts(products);
-      setSearchError(false);
-      return;
-    }
-    const filtered = products.filter((p) =>
-      p.title.toLowerCase().includes(term)
-    );
-    if (filtered.length > 0) {
-      setFilteredProducts(filtered);
-      setSearchError(false);
     } else {
-      setFilteredProducts([]);
-      setSearchError(true);
+      const filtered = products.filter((p) =>
+        p.title.toLowerCase().includes(term) || 
+        p.category.toLowerCase().includes(term)
+      );
+      setFilteredProducts(filtered);
     }
-  };
+  }, [searchTerm, products]);
 
   const handleBuy = (product) => {
-    // Next.js router.push doesn't support state. 
-    // We will rely on fetching by ID in the product page.
     router.push(`/product/${product.id}`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-sans text-slate-900">
       {/* Navbar */}
-      <nav className="bg-green-600 text-white py-4 px-6 flex items-center shadow-md sticky top-0 z-30">
-        <div className="flex-shrink-0">
-          <h1 className="text-2xl font-bold">AgroMart</h1>
-        </div>
-        <ul className="flex gap-12 mx-auto font-semibold items-center">
-          <li>
-            <Link href="/" className="hover:text-gray-200">Home</Link>
-          </li>
-          <li>
-            <Link href="/locations" className="hover:text-gray-200">Division</Link>
-          </li>
-          <li>
-            <Link href="/cart" className="hover:text-gray-200">Cart</Link>
-          </li>
-        </ul>
-      </nav>
-
-      {/* Hero */}
-      <section
-        className="relative bg-cover bg-center"
-        style={{
-          backgroundImage:
-            "url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1600')",
-        }}
-      >
-        <div className="bg-gradient-to-r from-gray-900/80 via-gray-800/70 to-transparent py-32 px-4 sm:px-6 lg:px-8 text-white text-center md:text-left">
-          <h2 className="text-4xl md:text-5xl font-extrabold">
-            Buy Fresh, Pay Fair — Direct from Farmers
-          </h2>
-          <p className="mt-4 max-w-xl text-gray-200">
-            Explore fresh and organic farm products directly from local farmers.
-          </p>
-
-          {/* Search */}
-          <div className="mt-6 flex flex-col md:flex-row items-center gap-3 justify-center md:justify-start">
-            <div className="flex items-stretch rounded-2xl border shadow-sm overflow-hidden bg-white text-black">
-              <div className="px-3 hidden md:flex items-center">
-                <SearchIcon className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="px-2 py-3 outline-none w-64"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              />
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
+            <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-green-600/20">
+              <LocalFloristIcon />
             </div>
-            <button
-              onClick={handleSearch}
-              className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-2xl shadow-lg"
+            <div>
+              <h1 className="font-bold text-xl text-gray-900 leading-none">AgroMart</h1>
+              <p className="text-xs text-green-600 font-medium">Customer Portal</p>
+            </div>
+          </div>
+
+          <nav className="hidden md:flex items-center gap-8 font-medium text-gray-600">
+            <Link href="/customer-home" className="text-green-600 font-semibold">Home</Link>
+            <Link href="/locations" className="hover:text-green-600 transition-colors">Division</Link>
+            <Link href="/cart" className="hover:text-green-600 transition-colors flex items-center gap-1">
+              <ShoppingCartIcon fontSize="small" /> Cart
+            </Link>
+          </nav>
+
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-red-50 rounded-full transition-colors font-medium text-sm"
             >
-              Search
+              <LogoutIcon fontSize="small" /> Logout
             </button>
           </div>
-          {searchError && (
-            <p className="text-red-400 mt-2 font-semibold">
-              No products found!
-            </p>
-          )}
+        </div>
+      </header>
+
+      {/* Hero / Search Section */}
+      <section className="bg-green-600 py-16 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1600')] bg-cover bg-center opacity-20"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-3xl md:text-5xl font-bold mb-6"
+          >
+            Welcome Back!
+          </motion.h1>
+          <p className="text-green-100 text-lg mb-8 max-w-2xl mx-auto">
+            Find fresh, organic produce directly from farmers near you.
+          </p>
+          
+          <div className="max-w-2xl mx-auto relative">
+            <input
+              type="text"
+              placeholder="Search for vegetables, fruits, rice..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-6 pr-14 py-4 rounded-full text-gray-900 outline-none shadow-lg focus:ring-4 focus:ring-green-500/30 transition-all"
+            />
+            <button className="absolute right-2 top-2 p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-colors">
+              <SearchIcon />
+            </button>
+          </div>
         </div>
       </section>
 
       {/* Products Grid */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h3 className="text-2xl font-bold text-gray-800 mb-6">
-          Available Products
-        </h3>
-        {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-gray-900">Available Products</h2>
+          <span className="text-gray-500 text-sm">{filteredProducts.length} items found</span>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div key={n} className="bg-white rounded-3xl h-80 animate-pulse shadow-sm border border-gray-100"></div>
+            ))}
+          </div>
+        ) : filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {filteredProducts.map((product) => (
-              <div
+              <motion.div
                 key={product.id}
-                className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition-shadow border"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ y: -5 }}
+                className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group"
               >
-                <img
-                  src={product.img}
-                  alt={product.title}
-                  className="h-48 w-full object-cover"
-                />
-                <div className="p-4">
-                  <h4 className="text-lg font-bold text-gray-900">
-                    {product.title}
-                  </h4>
-                  <p className="text-green-600 font-bold text-xl mt-1">
-                    ${product.price}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Category: {product.category}
-                  </p>
-                  <button
-                    onClick={() => handleBuy(product)}
-                    className="mt-4 w-full py-2 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700"
-                  >
-                    Buy Now
-                  </button>
+                <div className="h-48 overflow-hidden relative">
+                  <img
+                    src={product.img || "/placeholder.jpg"}
+                    alt={product.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => e.target.src = "https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=2070&auto=format&fit=crop"}
+                  />
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-green-700 shadow-sm">
+                    {product.category}
+                  </div>
                 </div>
-              </div>
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">{product.title}</h3>
+                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">{product.description || "Fresh from the farm"}</p>
+                  
+                  <div className="flex items-center justify-between mt-4">
+                    <div>
+                      <p className="text-xs text-gray-400">Price</p>
+                      <p className="text-green-600 font-bold text-lg">${product.price}</p>
+                    </div>
+                    <button
+                      onClick={() => handleBuy(product)}
+                      className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-green-700 transition-colors shadow-md hover:shadow-lg"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-10">
-            <p className="text-gray-500 text-lg">
-              No products available at the moment.
-            </p>
+          <div className="text-center py-20">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+              <SearchIcon fontSize="large" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">No products found</h3>
+            <p className="text-gray-500 mt-2">Try adjusting your search terms</p>
           </div>
         )}
       </section>
-
-      {/* Footer */}
-      <footer className="bg-white border-t py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
-          &copy; {new Date().getFullYear()} AgroMart. All rights reserved.
-        </div>
-      </footer>
     </div>
   );
 }
