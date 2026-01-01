@@ -1,12 +1,14 @@
+'use client';
+
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SecurityIcon from "@mui/icons-material/Security";
 
 export default function FarmerHomepage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [categoryFilter, setCategoryFilter] = useState("");
   const [products, setProducts] = useState([]);
   const [farmerName, setFarmerName] = useState("");
@@ -14,25 +16,39 @@ export default function FarmerHomepage() {
   useEffect(() => {
     const logged = localStorage.getItem("loggedFarmer");
     if (!logged) {
-      navigate("/farmer-login");
+      router.push("/farmer-login");
     } else {
       setFarmerName(logged);
     }
-  }, [navigate]);
+  }, [router]);
 
   useEffect(() => {
     if (farmerName) loadProducts();
   }, [farmerName, categoryFilter]);
 
   const loadProducts = () => {
+    // Note: In AddNewProductPage, we need to see how products are saved.
+    // Assuming they are saved with keys like `products_${farmerName}` or `products_${farmerName}_${category}`.
+    // The original code used `products_${farmerName}_${cat}`.
+    // But CustomerHomePage used `products_` prefix.
+    // Let's stick to the original logic here for now.
+    
     const categories = ["vegetables", "fruits", "rice", "honey"];
     let allProducts = [];
+
+    // Also check for generic `products_${farmerName}` key if used elsewhere
+    const genericKey = `products_${farmerName}`;
+    const genericProducts = JSON.parse(localStorage.getItem(genericKey)) || [];
+    allProducts = [...genericProducts];
 
     categories.forEach((cat) => {
       const key = `products_${farmerName}_${cat}`;
       const savedProducts = JSON.parse(localStorage.getItem(key)) || [];
       allProducts = [...allProducts, ...savedProducts];
     });
+
+    // Remove duplicates by ID
+    allProducts = Array.from(new Map(allProducts.map(item => [item.id, item])).values());
 
     const filtered = categoryFilter
       ? allProducts.filter(
@@ -44,10 +60,21 @@ export default function FarmerHomepage() {
   };
 
   const handleDelete = (prod) => {
-    const key = `products_${farmerName}_${prod.category.toLowerCase()}`;
-    const savedProducts = JSON.parse(localStorage.getItem(key)) || [];
-    const updated = savedProducts.filter((p) => p.id !== prod.id);
-    localStorage.setItem(key, JSON.stringify(updated));
+    // Try to delete from specific category key first
+    const catKey = `products_${farmerName}_${prod.category.toLowerCase()}`;
+    let savedProducts = JSON.parse(localStorage.getItem(catKey)) || [];
+    let updated = savedProducts.filter((p) => p.id !== prod.id);
+    
+    if (savedProducts.length !== updated.length) {
+        localStorage.setItem(catKey, JSON.stringify(updated));
+    } else {
+        // Try generic key
+        const genericKey = `products_${farmerName}`;
+        savedProducts = JSON.parse(localStorage.getItem(genericKey)) || [];
+        updated = savedProducts.filter((p) => p.id !== prod.id);
+        localStorage.setItem(genericKey, JSON.stringify(updated));
+    }
+    
     loadProducts();
   };
 
@@ -59,7 +86,7 @@ export default function FarmerHomepage() {
         </h1>
         <div className="flex items-center gap-6">
           <button
-            onClick={() => navigate("/customer-home")}
+            onClick={() => router.push("/customer-home")}
             className="hover:text-green-600 font-semibold"
           >
             Customer View
@@ -72,7 +99,7 @@ export default function FarmerHomepage() {
         <motion.div
           whileHover={{ scale: 1.05 }}
           className="bg-green-700 text-white py-8 px-6 rounded-2xl shadow-lg flex-1 cursor-pointer"
-          onClick={() => navigate("/add-product")}
+          onClick={() => router.push("/add-product")}
         >
           <h2 className="text-3xl font-bold">Add New Product 🌾</h2>
           <p className="mt-2 text-lg">Upload crops, vegetables, fruits and more.</p>
@@ -96,45 +123,26 @@ export default function FarmerHomepage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10 px-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10 px-6 pb-10">
         {products.length > 0 ? (
-          products.map((prod) => (
-            <div
-              key={prod.id}
-              className="bg-white p-4 rounded-xl shadow-md relative"
-            >
-              {prod.img && (
-                <img
-                  src={prod.img}
-                  alt={prod.title}
-                  className="w-full h-40 object-cover rounded"
-                />
-              )}
-              <h3 className="text-lg font-bold mt-2">{prod.title}</h3>
-              <p>Price: ${prod.price}</p>
-              <p>Details: {prod.details}</p>
-              <p>Nature: {prod.nature}</p>
-              <p>Category: {prod.category}</p>
-              <button
-                onClick={() => handleDelete(prod)}
-                className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-400"
+          products.map((p) => (
+            <div key={p.id} className="bg-white p-4 rounded-xl shadow-md">
+              <img src={p.img} alt={p.title} className="w-full h-40 object-cover rounded-lg" />
+              <h3 className="text-lg font-bold mt-2">{p.title}</h3>
+              <p className="text-green-600 font-bold">${p.price}</p>
+              <p className="text-sm text-gray-500 capitalize">{p.category}</p>
+              <button 
+                onClick={() => handleDelete(p)}
+                className="mt-3 w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
               >
-                Delete
+                Delete Product
               </button>
             </div>
           ))
         ) : (
-          <p className="text-gray-500 col-span-3 text-center mt-10">
-            No products available. Add some!
-          </p>
+          <p className="text-gray-500 col-span-3 text-center">No products found. Start adding some!</p>
         )}
       </div>
-
-      <footer className="mt-16 bg-white py-6 text-center border-t">
-        <p className="text-gray-600">
-          <SecurityIcon /> Secured by AgroMart © 2025
-        </p>
-      </footer>
     </div>
   );
 }

@@ -1,6 +1,9 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
 import SearchIcon from "@mui/icons-material/Search";
@@ -15,14 +18,14 @@ export default function AgroMartHome() {
   const [farmerName, setFarmerName] = useState(""); // Login হলে set হবে
   const [farmerProducts, setFarmerProducts] = useState([]);
   const dropdownRef = useRef(null);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // Default products for customers
   const defaultProducts = [
-    { id: 1, title: "Vegetables", category: "vegetables", subItems: ["tomato", "potato", "carrot"], price: 2.5, img: "Tomato.jpg" },
-    { id: 2, title: "Fruits", category: "fruits", subItems: ["apple", "banana", "mango", "orange"], price: 3.2, img: "Fruits.jpg" },
-    { id: 3, title: "Rice/Paddy", category: "rice", subItems: ["basmati", "jasmine", "sela"], price: 12.9, img: "Rice.jpg" },
-    { id: 4, title: "Organic Honey (250g)", category: "honey", subItems: ["honey"], price: 6.5, img: "honey1.jpg" },
+    { id: 1, title: "Vegetables", category: "vegetables", subItems: ["tomato", "potato", "carrot"], price: 2.5, img: "/Tomato.jpg" },
+    { id: 2, title: "Fruits", category: "fruits", subItems: ["apple", "banana", "mango", "orange"], price: 3.2, img: "/Fruits.jpg" },
+    { id: 3, title: "Rice/Paddy", category: "rice", subItems: ["basmati", "jasmine", "sela"], price: 12.9, img: "/Rice.jpg" },
+    { id: 4, title: "Organic Honey (250g)", category: "honey", subItems: ["honey"], price: 6.5, img: "/honey1.jpg" },
   ];
 
   // Load farmer products from localStorage per farmer
@@ -67,7 +70,7 @@ export default function AgroMartHome() {
         p.subItems.some((item) => item.toLowerCase() === term)
     );
     if (found) {
-      navigate(`/category/${found.category}`);
+      router.push(`/category/${found.category}`);
       setSearchTerm("");
       setSearchError(false);
     } else {
@@ -96,7 +99,7 @@ export default function AgroMartHome() {
             <a href="#features" className="hover:text-green-700">
               Home
             </a>
-            <Link to="/locations" className="hover:text-green-700">
+            <Link href="/locations" className="hover:text-green-700">
               Division
             </Link>
             <a
@@ -104,7 +107,7 @@ export default function AgroMartHome() {
               className="hover:text-green-700 cursor-pointer"
               onClick={(e) => {
                 e.preventDefault();
-                navigate("/soil-weather");
+                router.push("/soil-weather");
               }}
             >
               SoilBar & Weather
@@ -114,13 +117,13 @@ export default function AgroMartHome() {
           <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
             <button
               className="px-4 py-2 rounded-xl border hover:bg-slate-50"
-              onClick={() => navigate("/customer-login")}
+              onClick={() => router.push("/customer-login")}
             >
               Customer Login
             </button>
             <button
               className="px-4 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 shadow"
-              onClick={() => navigate("/customer-signup")}
+              onClick={() => router.push("/customer-signup")}
             >
               Customer Sign up
             </button>
@@ -152,33 +155,6 @@ export default function AgroMartHome() {
             </p>
 
             <div className="mt-6">
-              {/* <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  placeholder="Search for products..."
-                  className={`flex-1 px-4 py-3 rounded-2xl border outline-none text-black font-semibold ${
-                    searchError ? "border-red-500" : ""
-                  }`}
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setSearchError(false);
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                />
-                <button
-                  className="px-5 py-3 bg-green-600 text-white flex items-center gap-2 rounded-2xl hover:bg-green-700"
-                  onClick={handleSearch}
-                >
-                  <SearchIcon /> Search
-                </button>
-              </div>
-              {searchError && (
-                <span className="text-red-500 text-sm mt-1">
-                  Please fill this field or product not found!
-                </span>
-              )} */}
-
               <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-200">
                 <span className="inline-flex items-center gap-1">
                   <SecurityIcon className="w-4 h-4" /> Secure Payments
@@ -233,13 +209,13 @@ export default function AgroMartHome() {
           </div>
           <div className="flex flex-wrap md:justify-end gap-3 mt-4 md:mt-0">
             <Link
-              to="/farmer-signup"
+              href="/farmer-signup"
               className="px-4 py-3 rounded-xl bg-green-600 hover:bg-green-700"
             >
               Sign up as Farmer
             </Link>
             <Link
-              to="/farmer-login"
+              href="/farmer-login"
               className="px-4 py-3 rounded-xl bg-white text-slate-900 hover:bg-slate-100"
             >
               Login as Farmer

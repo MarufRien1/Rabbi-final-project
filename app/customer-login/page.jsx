@@ -1,10 +1,13 @@
+'use client';
+
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function CustomerLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -20,7 +23,7 @@ export default function CustomerLogin() {
       localStorage.setItem("currentUser", JSON.stringify(found));
 
       alert("Customer logged in successfully!");
-      navigate("/customer-home");
+      router.push("/customer-home");
     } else {
       alert("Invalid email or password!");
     }
@@ -48,20 +51,20 @@ export default function CustomerLogin() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-4 px-4 py-2 border rounded-lg"
+          className="w-full mb-6 px-4 py-2 border rounded-lg"
           placeholder="Enter your password"
         />
 
         <button
           type="submit"
-          className="w-full bg-green-600 text-white py-2 rounded-xl hover:bg-green-700"
+          className="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700"
         >
           Login
         </button>
 
-        <p className="text-sm mt-4 text-center">
+        <p className="mt-4 text-center text-sm">
           Don't have an account?{" "}
-          <Link to="/customer-signup" className="text-green-600 font-semibold">
+          <Link href="/customer-signup" className="text-green-600 font-bold">
             Sign up
           </Link>
         </p>

@@ -1,8 +1,10 @@
+'use client';
+
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export default function CartPage() {
     alert("Checkout successful!");
     localStorage.removeItem("cart");
     setCartItems([]);
-    navigate("/customer-home");
+    router.push("/customer-home");
   };
 
   return (

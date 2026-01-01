@@ -1,12 +1,15 @@
+'use client';
+
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function CustomerSignup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleSignup = (e) => {
     e.preventDefault();
@@ -30,7 +33,7 @@ export default function CustomerSignup() {
     localStorage.setItem("customers", JSON.stringify([...existingCustomers, newCustomer]));
 
     alert("Account created successfully!");
-    navigate("/customer-login");
+    router.push("/customer-login");
   };
 
   return (
@@ -62,17 +65,14 @@ export default function CustomerSignup() {
           />
           <button
             type="submit"
-            className="bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+            className="bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700"
           >
             Sign Up
           </button>
         </form>
-        <p className="mt-4 text-sm text-center">
+        <p className="mt-4 text-center text-sm">
           Already have an account?{" "}
-          <Link
-            to="/customer-login"
-            className="text-green-600 hover:underline"
-          >
+          <Link href="/customer-login" className="text-green-600 font-bold">
             Login
           </Link>
         </p>
