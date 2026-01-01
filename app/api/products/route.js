@@ -30,7 +30,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { title, category, price, details, nature, img, farmerId } = body;
+    const { title, category, price, details, nature, img, farmerId, stock } = body;
 
     if (!title || !category || !price || !farmerId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -44,6 +44,7 @@ export async function POST(request) {
         details,
         nature,
         img,
+        stock: parseInt(stock) || 1,
         farmerId: parseInt(farmerId),
       },
     });

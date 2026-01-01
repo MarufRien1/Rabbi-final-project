@@ -17,6 +17,8 @@ export default function FarmerHomepage() {
   const router = useRouter();
   const [categoryFilter, setCategoryFilter] = useState("");
   const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [activeTab, setActiveTab] = useState("products");
   const [farmerName, setFarmerName] = useState("");
   const [farmerId, setFarmerId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,8 +41,23 @@ export default function FarmerHomepage() {
   }, [router]);
 
   useEffect(() => {
-    if (farmerId) loadProducts();
+    if (farmerId) {
+      loadProducts();
+      loadOrders();
+    }
   }, [farmerId, categoryFilter]);
+
+  const loadOrders = async () => {
+    try {
+      const res = await fetch(`/api/orders/farmer/${farmerId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data);
+      }
+    } catch (error) {
+      console.error("Error loading orders:", error);
+    }
+  };
 
   const loadProducts = async () => {
     setIsLoading(true);
@@ -61,6 +78,26 @@ export default function FarmerHomepage() {
       console.error("Error loading products:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (res.ok) {
+        toast.success(`Order marked as ${newStatus}`);
+        loadOrders();
+      } else {
+        toast.error("Failed to update status");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Error updating status");
     }
   };
 
@@ -139,6 +176,27 @@ export default function FarmerHomepage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {/* Tabs */}
+        <div className="flex gap-6 mb-8 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab("products")}
+            className={`pb-4 px-2 font-bold text-lg transition-colors relative ${activeTab === "products" ? "text-green-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            My Products
+            {activeTab === "products" && <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600" />}
+          </button>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`pb-4 px-2 font-bold text-lg transition-colors relative ${activeTab === "orders" ? "text-green-600" : "text-gray-500 hover:text-gray-700"}`}
+          >
+            Incoming Orders
+            {orders.length > 0 && <span className="ml-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{orders.length}</span>}
+            {activeTab === "orders" && <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600" />}
+          </button>
+        </div>
+
+        {activeTab === "products" ? (
+          <>
         {/* Header Actions */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div>
@@ -241,6 +299,95 @@ export default function FarmerHomepage() {
             </button>
           </div>
         )}
+        </>
+      ) : (
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-900">Incoming Orders</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 font-medium text-sm">
+                <tr>
+                  <th className="px-6 py-4">Order ID</th>
+                  <th className="px-6 py-4">Product</th>
+                  <th className="px-6 py-4">Quantity</th>
+                  <th className="px-6 py-4">Total</th>
+                  <th className="px-6 py-4">Customer</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {orders.length > 0 ? (
+                  orders.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-gray-900 font-medium">#{item.orderId}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <img src={item.product.img || "/placeholder.jpg"} className="w-10 h-10 rounded-lg object-cover bg-gray-100" alt="" />
+                          <span className="text-gray-900">{item.product.title}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{item.quantity}</td>
+                      <td className="px-6 py-4 text-green-600 font-bold">${(item.price * item.quantity).toFixed(2)}</td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm">
+                          <p className="font-medium text-gray-900">{item.order.user.name}</p>
+                          <p className="text-gray-500">{item.order.user.mobile}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          item.order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                          item.order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
+                          item.order.status === 'Cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {item.order.status || 'Pending'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {item.order.status === 'Pending' && (
+                          <div className="flex flex-col gap-2">
+                            <button
+                              onClick={() => updateOrderStatus(item.orderId, 'Shipped')}
+                              className="px-3 py-1 bg-blue-600 text-white text-xs rounded-full hover:bg-blue-700 transition-colors"
+                            >
+                              Ship to Warehouse
+                            </button>
+                            <button
+                              onClick={() => updateOrderStatus(item.orderId, 'Cancelled')}
+                              className="px-3 py-1 bg-red-100 text-red-600 text-xs rounded-full hover:bg-red-200 transition-colors"
+                            >
+                              Cancel Order
+                            </button>
+                          </div>
+                        )}
+                        {item.order.status === 'Shipped' && (
+                          <span className="text-xs text-blue-600 font-medium">At Warehouse (Admin Processing)</span>
+                        )}
+                        {item.order.status === 'Delivered' && (
+                          <span className="text-xs text-green-600 font-medium">Completed</span>
+                        )}
+                        {item.order.status === 'Cancelled' && (
+                          <span className="text-xs text-red-600 font-medium">Cancelled</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-12 text-center text-gray-500">
+                      No orders yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
       </main>
     </div>
   );

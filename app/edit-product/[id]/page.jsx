@@ -15,6 +15,7 @@ const productSchema = z.object({
   category: z.string().min(1, "Category is required"),
   title: z.string().min(3, "Title must be at least 3 characters"),
   price: z.number({ invalid_type_error: "Price must be a number" }).min(1, "Price must be greater than 0"),
+  stock: z.number({ invalid_type_error: "Stock must be a number" }).min(0, "Stock cannot be negative"),
   details: z.string().optional(),
   nature: z.string().optional(),
 });
@@ -60,6 +61,7 @@ export default function EditProductPage() {
           setValue("category", product.category);
           setValue("title", product.title);
           setValue("price", product.price);
+          setValue("stock", product.stock);
           setValue("details", product.details || "");
           setValue("nature", product.nature || "");
           if (product.img) {
@@ -225,6 +227,17 @@ export default function EditProductPage() {
                       />
                     </div>
                     {errors.price && <p className="text-red-500 text-xs mt-1 ml-1">{errors.price.message}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Stock Quantity</label>
+                    <input
+                      type="number"
+                      {...register("stock", { valueAsNumber: true })}
+                      placeholder="e.g. 50"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 outline-none transition-all bg-gray-50"
+                    />
+                    {errors.stock && <p className="text-red-500 text-xs mt-1 ml-1">{errors.stock.message}</p>}
                   </div>
                 </div>
 

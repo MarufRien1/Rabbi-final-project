@@ -72,6 +72,7 @@ export default function CustomerHomePage() {
 
           <nav className="hidden md:flex items-center gap-8 font-medium text-gray-600">
             <Link href="/customer-home" className="text-green-600 font-semibold">Home</Link>
+            <Link href="/my-orders" className="hover:text-green-600 transition-colors">My Orders</Link>
             <Link href="/locations" className="hover:text-green-600 transition-colors">Division</Link>
             <Link href="/cart" className="hover:text-green-600 transition-colors flex items-center gap-1">
               <ShoppingCartIcon fontSize="small" /> Cart
@@ -152,21 +153,37 @@ export default function CustomerHomePage() {
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-green-700 shadow-sm">
                     {product.category}
                   </div>
+                  {product.stock <= 0 && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <span className="bg-red-600 text-white px-4 py-2 rounded-full font-bold text-sm">Out of Stock</span>
+                    </div>
+                  )}
                 </div>
                 <div className="p-5">
                   <h3 className="text-lg font-bold text-gray-900 mb-1">{product.title}</h3>
-                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">{product.description || "Fresh from the farm"}</p>
+                  <p className="text-sm text-gray-500 mb-4 line-clamp-2">{product.details || "Fresh from the farm"}</p>
                   
                   <div className="flex items-center justify-between mt-4">
                     <div>
                       <p className="text-xs text-gray-400">Price</p>
                       <p className="text-green-600 font-bold text-lg">${product.price}</p>
                     </div>
+                    <div className="text-right mr-4">
+                       <p className="text-xs text-gray-400">Stock</p>
+                       <p className={`font-bold text-sm ${product.stock > 0 ? 'text-gray-700' : 'text-red-500'}`}>
+                         {product.stock > 0 ? product.stock : '0'}
+                       </p>
+                    </div>
                     <button
                       onClick={() => handleBuy(product)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-xl font-semibold text-sm hover:bg-green-700 transition-colors shadow-md hover:shadow-lg"
+                      disabled={product.stock <= 0}
+                      className={`px-4 py-2 rounded-xl font-semibold text-sm transition-colors shadow-md ${
+                        product.stock > 0 
+                        ? "bg-green-600 text-white hover:bg-green-700 hover:shadow-lg" 
+                        : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      }`}
                     >
-                      View Details
+                      {product.stock > 0 ? "View Details" : "Sold Out"}
                     </button>
                   </div>
                 </div>

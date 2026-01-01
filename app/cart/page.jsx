@@ -14,6 +14,8 @@ export default function CartPage() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [address, setAddress] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -30,15 +32,51 @@ export default function CartPage() {
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handleCheckout = () => {
-    setIsCheckingOut(true);
-    toast.success("Checkout successful!");
-    
-    setTimeout(() => {
-      localStorage.removeItem("cart");
-      setCartItems([]);
-      router.push("/customer-home");
-    }, 2000);
+  const handleCheckout = async () => {
+    if (!address.trim()) {
+      toast.error("Please enter a delivery address");
+      return;
+    }
+
+    const userStr = localStorage.getItem("currentUser");
+    if (!userStr) {
+      toast.error("Please login to checkout");
+      router.push("/customer-login");
+      return;
+    }
+    const user = JSON.parse(userStr);
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          items: cartItems,
+          total: totalPrice,
+          address
+        }),
+      });
+
+      if (res.ok) {
+        setIsCheckingOut(true);
+        toast.success("Order placed successfully!");
+        setTimeout(() => {
+          localStorage.removeItem("cart");
+          setCartItems([]);
+          router.push("/customer-home");
+        }, 2000);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to place order");
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -153,6 +191,18 @@ export default function CartPage() {
                     <span>$0.00</span>
                   </div>
                 </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Address</label>
+                  <textarea
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Enter your full address..."
+                    rows="3"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 outline-none transition-all bg-gray-50 resize-none text-sm"
+                  ></textarea>
+                </div>
+
                 <div className="border-t border-gray-100 pt-6 mb-8">
                   <div className="flex justify-between items-center font-bold text-2xl text-gray-900">
                     <span>Total</span>
@@ -161,9 +211,10 @@ export default function CartPage() {
                 </div>
                 <button 
                   onClick={handleCheckout}
-                  className="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 transition-all shadow-lg hover:shadow-green-600/30 active:scale-[0.99]"
+                  disabled={isSubmitting}
+                  className="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 transition-all shadow-lg hover:shadow-green-600/30 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Checkout Now
+                  {isSubmitting ? "Processing..." : "Checkout Now"}
                 </button>
                 <p className="text-center text-xs text-gray-400 mt-4">
                   Secure checkout powered by AgroMart

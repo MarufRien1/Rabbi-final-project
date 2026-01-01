@@ -14,6 +14,7 @@ import LoginIcon from "@mui/icons-material/Login";
 import PersonIcon from "@mui/icons-material/Person";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import LogoutIcon from "@mui/icons-material/Logout";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 
 export default function AgroMartHome() {
   const router = useRouter();
@@ -155,6 +156,11 @@ export default function AgroMartHome() {
                         <Link href={userRole === 'farmer' ? "/farmer-homepage" : "/customer-home"} className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 rounded-xl text-gray-700 hover:text-green-700 transition-colors">
                           <DashboardIcon fontSize="small" /> Dashboard
                         </Link>
+                        {userRole === 'customer' && (
+                          <Link href="/my-orders" className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 rounded-xl text-gray-700 hover:text-green-700 transition-colors">
+                            <LocalShippingIcon fontSize="small" /> My Orders
+                          </Link>
+                        )}
                         <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 rounded-xl text-red-600 hover:text-red-700 transition-colors text-left">
                           <LogoutIcon fontSize="small" /> Logout
                         </button>
@@ -180,6 +186,9 @@ export default function AgroMartHome() {
                         </Link>
                         <Link href="/farmer-login" className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 rounded-xl text-gray-700 hover:text-green-700 transition-colors">
                           <LocalFloristIcon fontSize="small" /> Farmer Login
+                        </Link>
+                        <Link href="/admin-login" className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 rounded-xl text-gray-700 hover:text-green-700 transition-colors">
+                          <AdminPanelSettingsIcon fontSize="small" /> Admin Login
                         </Link>
                       </div>
                     </div>

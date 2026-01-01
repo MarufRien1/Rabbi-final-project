@@ -18,6 +18,7 @@ model User {
   password String
   role     String   // "customer" or "farmer"
   products Product[]
+  orders   Order[]
   createdAt DateTime @default(now())
 }
 
@@ -29,7 +30,30 @@ model Product {
   details     String?
   nature      String?
   img         String?  // Base64 or URL
+  stock       Int      @default(1)
   farmerId    Int
   farmer      User     @relation(fields: [farmerId], references: [id])
+  orderItems  OrderItem[]
   createdAt   DateTime @default(now())
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  total     Float
+  status    String   @default("Pending") // Pending, Shipped, Delivered, Cancelled
+  address   String
+  items     OrderItem[]
+  createdAt DateTime @default(now())
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
 }
