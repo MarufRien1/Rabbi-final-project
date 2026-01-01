@@ -14,40 +14,20 @@ export default function CategoryPage() {
   useEffect(() => {
     if (!category) return;
 
-    const categoryLower = category.toLowerCase();
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch(`/api/products?category=${category}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
 
-    // 1. Filter static products
-    const staticFiltered = staticProducts.filter(
-      (p) => p.category.toLowerCase() === categoryLower
-    );
-
-    // 2. Filter dynamic products from localStorage
-    // Note: Some pages in original code used specific keys like "rice" or "honey" in localStorage.
-    // But CustomerHomePage used "products_" keys. We should probably look at both or standardize.
-    // For now, let's look at "products_" keys as that seems to be the "Farmer added" products.
-    // Also check if there is a specific key for the category (legacy support).
-    
-    const farmerKeys = Object.keys(localStorage).filter((key) =>
-      key.startsWith("products_")
-    );
-
-    let dynamicFiltered = [];
-    for (const key of farmerKeys) {
-      const prods = JSON.parse(localStorage.getItem(key)) || [];
-      const filtered = prods.filter((p) => p.category.toLowerCase() === categoryLower);
-      dynamicFiltered = [...dynamicFiltered, ...filtered];
-    }
-
-    // Also check legacy keys if any (e.g. "rice" key used in RicePage.jsx)
-    const legacy storedCategory = JSON.parse(localStorage.getItem(categoryLower)) || [];
-    
-    // Combine all unique products
-    const allProducts = [...staticFiltered, ...dynamicFiltered, ...storedCategory];
-    
-    // Remove duplicates by ID
-    const uniqueProducts = Array.from(new Map(allProducts.map(item => [item.id, item])).values());
-
-    setProducts(uniqueProducts);
+    fetchProducts();
+  }, [category]);
   }, [category]);
 
   return (

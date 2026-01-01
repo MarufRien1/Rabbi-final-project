@@ -4,49 +4,56 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import toast from "react-hot-toast";
+
+const farmerLoginSchema = z.object({
+  mobile: z.string().min(1, "Mobile number is required"),
+  password: z.string().min(1, "Password is required"),
+});
 
 export default function FarmerLogin() {
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [serverError, setServerError] = useState("");
   const router = useRouter();
 
-  const handleLogin = (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(farmerLoginSchema),
+  });
 
-    if (!mobile || !password) {
-      setError("All fields are required!");
-      return;
-    }
+  const onSubmit = async (formData) => {
+    setServerError("");
 
-    // localStorage থেকে Array আকারে Data নিন
-    let savedUsers = [];
     try {
-      savedUsers = JSON.parse(localStorage.getItem("farmerUser")) || [];
-      if (!Array.isArray(savedUsers)) {
-        savedUsers = []; // যদি Array না হয়, খালি Array বানান
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, role: 'farmer' }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // login successful
+        toast.success("Login successful!");
+        localStorage.setItem("loggedFarmer", data.user.name);
+        localStorage.setItem("currentFarmer", JSON.stringify(data.user)); // Store full object for ID access
+        router.push("/farmer-homepage");
+      } else {
+        const errorMsg = data.error || "Invalid mobile or password!";
+        setServerError(errorMsg);
+        toast.error(errorMsg);
       }
     } catch (err) {
-      savedUsers = [];
+      console.error("Login error:", err);
+      setServerError("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     }
-
-    // Find user by mobile
-    const savedUser = savedUsers.find((user) => user.mobile === mobile);
-
-    if (!savedUser) {
-      setError("No account found! Please sign up first.");
-      return;
-    }
-
-    if (savedUser.password !== password) {
-      setError("Invalid mobile or password!");
-      return;
-    }
-
-    // login successful
-    localStorage.setItem("loggedFarmer", savedUser.name);
-    setError("");
-    router.push("/farmer-homepage");
   };
 
   return (
@@ -60,24 +67,24 @@ export default function FarmerLogin() {
           <p className="text-sm text-gray-500">Welcome back to AgroMart</p>
         </div>
 
-        {error && (
+        {serverError && (
           <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm text-center border border-red-100">
-            {error}
+            {serverError}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Mobile Number
             </label>
             <input
               type="text"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+              {...register("mobile")}
+              className={`w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="01XXXXXXXXX"
             />
+            {errors.mobile && <p className="text-red-500 text-xs mt-1">{errors.mobile.message}</p>}
           </div>
 
           <div>
@@ -86,20 +93,22 @@ export default function FarmerLogin() {
             </label>
             <input
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+              {...register("password")}
+              className={`w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="••••••••"
             />
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-sm"
+            disabled={isSubmitting}
+            className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50"
           >
-            Login
+            {isSubmitting ? "Logging in..." : "Login"}
           </button>
         </form>
+
 
         <div className="mt-6 text-center text-sm text-gray-600">
           Don't have an account?{" "}

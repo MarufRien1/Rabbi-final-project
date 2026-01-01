@@ -4,59 +4,57 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import toast from "react-hot-toast";
+
+const farmerSignupSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  mobile: z.string().regex(/^\d{11}$/, "Mobile number must be 11 digits"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 
 export default function FarmerSignup() {
-  const [name, setName] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [serverError, setServerError] = useState("");
   const [success, setSuccess] = useState("");
   const router = useRouter();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(farmerSignupSchema),
+  });
 
-    if (!name || !mobile || !password) {
-      setError("All fields are required!");
-      setSuccess("");
-      return;
-    }
+  const onSubmit = async (formData) => {
+    setServerError("");
+    setSuccess("");
 
-    // localStorage থেকে existing users নিয়ে আসা
-    let existingUsers = [];
     try {
-      existingUsers = JSON.parse(localStorage.getItem("farmerUser")) || [];
-      if (!Array.isArray(existingUsers)) {
-        existingUsers = [];
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, role: 'farmer' }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setSuccess("Account created successfully! Redirecting...");
+        toast.success("Account created successfully! Redirecting...");
+        setTimeout(() => {
+          router.push("/farmer-login");
+        }, 1500);
+      } else {
+        setServerError(data.error || "Signup failed");
+        toast.error(data.error || "Signup failed");
       }
     } catch (err) {
-      existingUsers = [];
+      setServerError("Something went wrong");
+      toast.error("Something went wrong");
     }
-
-    // Mobile number check
-    const userExists = existingUsers.some((user) => user.mobile === mobile);
-    if (userExists) {
-      setError("Mobile number already registered! Please login.");
-      setSuccess("");
-      return;
-    }
-
-    // নতুন user add করা
-    const newUser = { name, mobile, password };
-    existingUsers.push(newUser);
-    localStorage.setItem("farmerUser", JSON.stringify(existingUsers));
-
-    // ইনপুট ফিল্ডগুলো পরিষ্কার করা
-    setName("");
-    setMobile("");
-    setPassword("");
-
-    setSuccess("Account created successfully! Redirecting...");
-    setError("");
-
-    setTimeout(() => {
-      router.push("/farmer-login");
-    }, 1500);
   };
 
   return (
@@ -70,9 +68,9 @@ export default function FarmerSignup() {
           <p className="text-sm text-gray-500">Join AgroMart to sell your products</p>
         </div>
 
-        {error && (
+        {serverError && (
           <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm text-center border border-red-100">
-            {error}
+            {serverError}
           </div>
         )}
 
@@ -82,18 +80,18 @@ export default function FarmerSignup() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Full Name
             </label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+              {...register("name")}
+              className={`w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="Your Name"
             />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
@@ -102,14 +100,35 @@ export default function FarmerSignup() {
             </label>
             <input
               type="text"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
+              {...register("mobile")}
+              className={`w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all ${errors.mobile ? 'border-red-500' : 'border-gray-300'}`}
               placeholder="01XXXXXXXXX"
             />
+            {errors.mobile && <p className="text-red-500 text-xs mt-1">{errors.mobile.message}</p>}
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Password
+            </label>
+            <input
+              type="password"
+              {...register("password")}
+              className={`w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="••••••••"
+            />
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md hover:shadow-lg disabled:opacity-50"
+          >
+            {isSubmitting ? "Creating Account..." : "Create Account"}
+          </button>
+        </form>
+
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
             </label>

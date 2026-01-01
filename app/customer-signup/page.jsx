@@ -3,71 +3,95 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import toast from "react-hot-toast";
+
+const signupSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 
 export default function CustomerSignup() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [serverError, setServerError] = useState("");
   const router = useRouter();
 
-  const handleSignup = (e) => {
-    e.preventDefault();
-    if (!name || !email || !password) {
-      setError("Please fill all fields");
-      return;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(signupSchema),
+  });
+
+  const onSubmit = async (formData) => {
+    setServerError("");
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, role: 'customer' }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Account created successfully!");
+        router.push("/customer-login");
+      } else {
+        setServerError(data.error || "Signup failed");
+        toast.error(data.error || "Signup failed");
+      }
+    } catch (err) {
+      setServerError("Something went wrong");
+      toast.error("Something went wrong");
     }
-
-    // Load existing customers from localStorage
-    const existingCustomers = JSON.parse(localStorage.getItem("customers")) || [];
-
-    // Check if email already exists
-    const emailExists = existingCustomers.some((c) => c.email === email);
-    if (emailExists) {
-      setError("Email already registered");
-      return;
-    }
-
-    // Add new customer
-    const newCustomer = { name, email, password };
-    localStorage.setItem("customers", JSON.stringify([...existingCustomers, newCustomer]));
-
-    alert("Account created successfully!");
-    router.push("/customer-login");
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-10 rounded-2xl shadow-md w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center">Customer Sign Up</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-        <form onSubmit={handleSignup} className="flex flex-col gap-4">
-          <input
-            type="text"
-            placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border px-4 py-2 rounded-lg outline-none"
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border px-4 py-2 rounded-lg outline-none"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border px-4 py-2 rounded-lg outline-none"
-          />
+        {serverError && <p className="text-red-500 mb-4 text-center">{serverError}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <div>
+            <input
+              type="text"
+              placeholder="Full Name"
+              {...register("name")}
+              className={`w-full border px-4 py-2 rounded-lg outline-none ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+          </div>
+          
+          <div>
+            <input
+              type="email"
+              placeholder="Email"
+              {...register("email")}
+              className={`w-full border px-4 py-2 rounded-lg outline-none ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+          </div>
+
+          <div>
+            <input
+              type="password"
+              placeholder="Password"
+              {...register("password")}
+              className={`w-full border px-4 py-2 rounded-lg outline-none ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+            />
+            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+          </div>
+
           <button
             type="submit"
-            className="bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700"
+            disabled={isSubmitting}
+            className="bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 disabled:opacity-50"
           >
-            Sign Up
+            {isSubmitting ? "Signing Up..." : "Sign Up"}
           </button>
         </form>
         <p className="mt-4 text-center text-sm">

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function CartPage() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function CartPage() {
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleCheckout = () => {
-    alert("Checkout successful!");
+    toast.success("Checkout successful!");
     localStorage.removeItem("cart");
     setCartItems([]);
     router.push("/customer-home");

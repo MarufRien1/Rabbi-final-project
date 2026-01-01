@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import SecurityIcon from "@mui/icons-material/Security";
+import toast from "react-hot-toast";
 
 export default function FarmerHomepage() {
   const router = useRouter();
@@ -14,68 +15,89 @@ export default function FarmerHomepage() {
   const [farmerName, setFarmerName] = useState("");
 
   useEffect(() => {
-    const logged = localStorage.getItem("loggedFarmer");
-    if (!logged) {
-      router.push("/farmer-login");
+    const loggedFarmerStr = localStorage.getItem("currentFarmer");
+    if (!loggedFarmerStr) {
+       const logged = localStorage.getItem("loggedFarmer");
+       if (!logged) {
+         router.push("/farmer-login");
+         return;
+       }
+       toast.error("Please login again to refresh your session.");
+       router.push("/farmer-login");
     } else {
-      setFarmerName(logged);
+      const farmer = JSON.parse(loggedFarmerStr);
+      setFarmerName(farmer.name);
+      // Store ID in state to trigger loadProducts
+      setFarmerId(farmer.id);
     }
   }, [router]);
 
+  const [farmerId, setFarmerId] = useState(null);
+
   useEffect(() => {
-    if (farmerName) loadProducts();
-  }, [farmerName, categoryFilter]);
+    if (farmerId) loadProducts();
+  }, [farmerId, categoryFilter]);
 
-  const loadProducts = () => {
-    // Note: In AddNewProductPage, we need to see how products are saved.
-    // Assuming they are saved with keys like `products_${farmerName}` or `products_${farmerName}_${category}`.
-    // The original code used `products_${farmerName}_${cat}`.
-    // But CustomerHomePage used `products_` prefix.
-    // Let's stick to the original logic here for now.
-    
-    const categories = ["vegetables", "fruits", "rice", "honey"];
-    let allProducts = [];
-
-    // Also check for generic `products_${farmerName}` key if used elsewhere
-    const genericKey = `products_${farmerName}`;
-    const genericProducts = JSON.parse(localStorage.getItem(genericKey)) || [];
-    allProducts = [...genericProducts];
-
-    categories.forEach((cat) => {
-      const key = `products_${farmerName}_${cat}`;
-      const savedProducts = JSON.parse(localStorage.getItem(key)) || [];
-      allProducts = [...allProducts, ...savedProducts];
-    });
-
-    // Remove duplicates by ID
-    allProducts = Array.from(new Map(allProducts.map(item => [item.id, item])).values());
-
-    const filtered = categoryFilter
-      ? allProducts.filter(
-          (p) => p.category.toLowerCase() === categoryFilter.toLowerCase()
-        )
-      : allProducts;
-
-    setProducts(filtered);
+  const loadProducts = async () => {
+    try {
+      let url = `/api/products?farmerId=${farmerId}`;
+      if (categoryFilter) {
+        url += `&category=${categoryFilter}`;
+      }
+      
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data);
+      } else {
+        console.error("Failed to fetch products");
+      }
+    } catch (error) {
+      console.error("Error loading products:", error);
+    }
   };
 
   const handleDelete = (prod) => {
-    // Try to delete from specific category key first
-    const catKey = `products_${farmerName}_${prod.category.toLowerCase()}`;
-    let savedProducts = JSON.parse(localStorage.getItem(catKey)) || [];
-    let updated = savedProducts.filter((p) => p.id !== prod.id);
-    
-    if (savedProducts.length !== updated.length) {
-        localStorage.setItem(catKey, JSON.stringify(updated));
-    } else {
-        // Try generic key
-        const genericKey = `products_${farmerName}`;
-        savedProducts = JSON.parse(localStorage.getItem(genericKey)) || [];
-        updated = savedProducts.filter((p) => p.id !== prod.id);
-        localStorage.setItem(genericKey, JSON.stringify(updated));
+    toast((t) => (
+      <div className="flex flex-col gap-2">
+        <p className="font-medium">Delete {prod.title}?</p>
+        <div className="flex gap-2 justify-end">
+          <button 
+            className="bg-gray-200 px-3 py-1 rounded text-sm hover:bg-gray-300"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button 
+            className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+            onClick={() => {
+              toast.dismiss(t.id);
+              performDelete(prod);
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000, icon: '🗑️' });
+  };
+
+  const performDelete = async (prod) => {
+    try {
+      const res = await fetch(`/api/products/${prod.id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        toast.success("Product deleted successfully");
+        loadProducts(); // Reload list
+      } else {
+        toast.error("Failed to delete product");
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      toast.error("Something went wrong");
     }
-    
-    loadProducts();
   };
 
   return (

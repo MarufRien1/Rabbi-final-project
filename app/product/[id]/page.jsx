@@ -15,35 +15,23 @@ export default function ProductBuyPage() {
   useEffect(() => {
     if (!id) return;
 
-    const productId = parseInt(id);
-
-    // 1. Check static products
-    const foundStatic = staticProducts.find((p) => p.id === productId);
-    if (foundStatic) {
-      setProduct(foundStatic);
-      setLoading(false);
-      return;
-    }
-
-    // 2. Check localStorage products (dynamic)
-    const farmerKeys = Object.keys(localStorage).filter((key) =>
-      key.startsWith("products_")
-    );
-
-    let foundDynamic = null;
-    for (const key of farmerKeys) {
-      const prods = JSON.parse(localStorage.getItem(key)) || [];
-      const found = prods.find((p) => p.id === productId);
-      if (found) {
-        foundDynamic = found;
-        break;
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`/api/products/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setProduct(data);
+        } else {
+          setProduct(null);
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    if (foundDynamic) {
-      setProduct(foundDynamic);
-    }
-    setLoading(false);
+    fetchProduct();
   }, [id]);
 
   const handleAddToCart = () => {

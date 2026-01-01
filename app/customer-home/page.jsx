@@ -17,25 +17,19 @@ export default function CustomerHomePage() {
   const [filteredProducts, setFilteredProducts] = useState([]);
 
   useEffect(() => {
-    // আগের পুরোনো products clear করা
-    localStorage.removeItem("fruits");
-    localStorage.removeItem("vegetables");
-    localStorage.removeItem("rice");
-    localStorage.removeItem("honey");
-
-    // Farmer থেকে add করা সব products collect করা
-    const farmerKeys = Object.keys(localStorage).filter((key) =>
-      key.startsWith("products_")
-    );
-
-    let allProducts = [];
-    farmerKeys.forEach((key) => {
-      const prods = JSON.parse(localStorage.getItem(key)) || [];
-      allProducts = [...allProducts, ...prods];
-    });
-
-    setProducts(allProducts);
-    setFilteredProducts(allProducts);
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data);
+          setFilteredProducts(data);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+    fetchProducts();
   }, []);
 
   const handleSearch = () => {
