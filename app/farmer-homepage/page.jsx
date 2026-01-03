@@ -24,14 +24,8 @@ export default function FarmerHomepage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const loggedFarmerStr = localStorage.getItem("currentFarmer");
+    const loggedFarmerStr = localStorage.getItem("currentFarmer") || sessionStorage.getItem("currentFarmer");
     if (!loggedFarmerStr) {
-       const logged = localStorage.getItem("loggedFarmer");
-       if (!logged) {
-         router.push("/farmer-login");
-         return;
-       }
-       toast.error("Please login again to refresh your session.");
        router.push("/farmer-login");
     } else {
       const farmer = JSON.parse(loggedFarmerStr);
@@ -165,6 +159,7 @@ export default function FarmerHomepage() {
             <button 
               onClick={() => {
                 localStorage.removeItem("currentFarmer");
+                sessionStorage.removeItem("currentFarmer");
                 router.push("/farmer-login");
               }}
               className="flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-red-50 rounded-full transition-colors font-medium text-sm"

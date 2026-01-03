@@ -11,16 +11,29 @@ export default function AdminLoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = (e) => {
     e.preventDefault();
     if (username === "admin" && password === "admin123") {
-      localStorage.setItem("adminAuth", "true");
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem("adminAuth", "true");
+      
+      if (rememberMe) {
+        sessionStorage.removeItem("adminAuth");
+      } else {
+        localStorage.removeItem("adminAuth");
+      }
+
       toast.success("Welcome Admin!");
       router.push("/admin-dashboard");
     } else {
       toast.error("Invalid credentials");
     }
+  };
+
+  const handleForgotPassword = () => {
+    toast.success("Please contact system administrator for reset.");
   };
 
   return (
@@ -66,6 +79,21 @@ export default function AdminLoginPage() {
             >
               Login to Dashboard
             </button>
+            
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-gray-300 text-green-600 focus:ring-green-500" 
+                />
+                <span className="text-gray-600">Remember me</span>
+              </label>
+              <button type="button" onClick={handleForgotPassword} className="text-green-600 font-medium hover:underline">
+                Forgot password?
+              </button>
+            </div>
           </form>
           <div className="mt-6 text-center">
             <button onClick={() => router.push('/')} className="text-sm text-gray-500 hover:text-green-600">

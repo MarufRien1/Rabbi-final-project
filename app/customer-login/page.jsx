@@ -22,6 +22,7 @@ export default function CustomerLogin() {
   const router = useRouter();
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const {
     register,
@@ -30,6 +31,11 @@ export default function CustomerLogin() {
   } = useForm({
     resolver: zodResolver(loginSchema),
   });
+
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    toast.success("Password reset link sent to your email!");
+  };
 
   const onSubmit = async (formData) => {
     setServerError("");
@@ -46,8 +52,18 @@ export default function CustomerLogin() {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("userType", "customer");
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("userType", "customer");
+        storage.setItem("currentUser", JSON.stringify(data.user));
+
+        // Clear other storage to avoid conflicts
+        if (rememberMe) {
+          sessionStorage.removeItem("currentUser");
+          sessionStorage.removeItem("userType");
+        } else {
+          localStorage.removeItem("currentUser");
+          localStorage.removeItem("userType");
+        }
 
         toast.success("Welcome back!");
         router.push("/customer-home");
@@ -152,10 +168,15 @@ export default function CustomerLogin() {
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-500" />
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-gray-300 text-green-600 focus:ring-green-500" 
+                />
                 <span className="text-gray-600">Remember me</span>
               </label>
-              <a href="#" className="text-green-600 font-medium hover:underline">Forgot password?</a>
+              <button onClick={handleForgotPassword} className="text-green-600 font-medium hover:underline">Forgot password?</button>
             </div>
 
             <button

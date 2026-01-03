@@ -14,7 +14,7 @@ export default function MyOrdersPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const userStr = localStorage.getItem("currentUser");
+    const userStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
     if (!userStr) {
       router.push("/customer-login");
       return;

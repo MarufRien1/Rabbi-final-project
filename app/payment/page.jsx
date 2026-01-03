@@ -41,7 +41,7 @@ export default function PaymentPage() {
       return;
     }
 
-    const userStr = localStorage.getItem("currentUser");
+    const userStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
     if (!userStr) {
       toast.error("Please login to checkout");
       router.push("/customer-login");

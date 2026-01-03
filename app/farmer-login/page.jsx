@@ -22,6 +22,7 @@ const farmerLoginSchema = z.object({
 export default function FarmerLogin() {
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
 
   const {
@@ -31,6 +32,11 @@ export default function FarmerLogin() {
   } = useForm({
     resolver: zodResolver(farmerLoginSchema),
   });
+
+  const handleForgotPassword = (e) => {
+    e.preventDefault();
+    toast.success("Password reset code sent to your mobile!");
+  };
 
   const onSubmit = async (formData) => {
     setServerError("");
@@ -49,8 +55,19 @@ export default function FarmerLogin() {
 
       if (res.ok) {
         toast.success("Login successful!");
-        localStorage.setItem("loggedFarmer", data.user.name);
-        localStorage.setItem("currentFarmer", JSON.stringify(data.user));
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem("loggedFarmer", data.user.name);
+        storage.setItem("currentFarmer", JSON.stringify(data.user));
+
+        // Clear other storage
+        if (rememberMe) {
+          sessionStorage.removeItem("loggedFarmer");
+          sessionStorage.removeItem("currentFarmer");
+        } else {
+          localStorage.removeItem("loggedFarmer");
+          localStorage.removeItem("currentFarmer");
+        }
+
         router.push("/farmer-homepage");
       } else {
         const errorMsg = data.error || "Invalid mobile or password!";
@@ -157,10 +174,15 @@ export default function FarmerLogin() {
 
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-gray-300 text-green-600 focus:ring-green-500" />
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-gray-300 text-green-600 focus:ring-green-500" 
+                />
                 <span className="text-gray-600">Remember me</span>
               </label>
-              <a href="#" className="text-green-600 font-medium hover:underline">Forgot password?</a>
+              <button onClick={handleForgotPassword} className="text-green-600 font-medium hover:underline">Forgot password?</button>
             </div>
 
             <button

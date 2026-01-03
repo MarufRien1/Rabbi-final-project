@@ -27,8 +27,9 @@ export default function AgroMartHome() {
 
   useEffect(() => {
     const checkLogin = () => {
-      const farmer = localStorage.getItem("currentFarmer");
-      const customer = localStorage.getItem("currentUser");
+      const farmer = localStorage.getItem("currentFarmer") || sessionStorage.getItem("currentFarmer");
+      const customer = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
+      const admin = localStorage.getItem("adminAuth") || sessionStorage.getItem("adminAuth");
       
       if (farmer) {
         setIsLoggedIn(true);
@@ -36,6 +37,9 @@ export default function AgroMartHome() {
       } else if (customer) {
         setIsLoggedIn(true);
         setUserRole("customer");
+      } else if (admin) {
+        setIsLoggedIn(true);
+        setUserRole("admin");
       } else {
         setIsLoggedIn(false);
         setUserRole("");
@@ -46,10 +50,8 @@ export default function AgroMartHome() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("currentFarmer");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("userType");
-    localStorage.removeItem("loggedFarmer");
+    localStorage.clear();
+    sessionStorage.clear();
     setIsLoggedIn(false);
     setUserRole("");
     setDropdownOpen(false);
@@ -153,7 +155,7 @@ export default function AgroMartHome() {
                   {dropdownOpen && (
                     <div className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-fade-in-up">
                       <div className="p-2">
-                        <Link href={userRole === 'farmer' ? "/farmer-homepage" : "/customer-home"} className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 rounded-xl text-gray-700 hover:text-green-700 transition-colors">
+                        <Link href={userRole === 'farmer' ? "/farmer-homepage" : userRole === 'admin' ? "/admin-dashboard" : "/customer-home"} className="flex items-center gap-3 px-4 py-3 hover:bg-green-50 rounded-xl text-gray-700 hover:text-green-700 transition-colors">
                           <DashboardIcon fontSize="small" /> Dashboard
                         </Link>
                         {userRole === 'customer' && (

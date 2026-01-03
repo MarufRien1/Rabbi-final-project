@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const isAdmin = localStorage.getItem("adminAuth");
+    const isAdmin = localStorage.getItem("adminAuth") || sessionStorage.getItem("adminAuth");
     if (!isAdmin) {
       router.push("/admin-login");
       return;
@@ -71,6 +71,7 @@ export default function AdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuth");
+    sessionStorage.removeItem("adminAuth");
     router.push("/admin-login");
   };
 
