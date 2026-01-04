@@ -36,8 +36,9 @@ export default function PaymentPage() {
       toast.error("Please enter a delivery address");
       return;
     }
-    if (cardNumber.length < 16 || expiry.length < 5 || cvv.length < 3) {
-      toast.error("Please enter valid card details");
+    // Fake payment: accept any card info
+    if (!cardNumber || !expiry || !cvv) {
+      toast.error("Please enter card details");
       return;
     }
 

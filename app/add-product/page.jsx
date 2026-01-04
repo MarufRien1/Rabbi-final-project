@@ -37,15 +37,9 @@ export default function AddNewProductPage() {
   });
 
   useEffect(() => {
-    const loggedFarmerStr = localStorage.getItem("currentFarmer");
+    const loggedFarmerStr = localStorage.getItem("currentFarmer") || sessionStorage.getItem("currentFarmer");
     if (!loggedFarmerStr) {
-      const oldLogged = localStorage.getItem("loggedFarmer");
-      if (!oldLogged) {
-        toast.error("Please login first!");
-        router.push("/farmer-login");
-        return;
-      }
-      toast.error("Session expired or invalid. Please login again.");
+      toast.error("Please login first!");
       router.push("/farmer-login");
       return;
     }
@@ -73,7 +67,7 @@ export default function AddNewProductPage() {
   const onSubmit = async (formData) => {
     setServerError("");
     
-    const loggedFarmerStr = localStorage.getItem("currentFarmer");
+    const loggedFarmerStr = localStorage.getItem("currentFarmer") || sessionStorage.getItem("currentFarmer");
     if (!loggedFarmerStr) {
       toast.error("Please login again.");
       return;

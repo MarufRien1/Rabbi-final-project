@@ -13,9 +13,6 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function CartPage() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState([]);
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [address, setAddress] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -32,51 +29,14 @@ export default function CartPage() {
 
   const totalPrice = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handleCheckout = async () => {
-    if (!address.trim()) {
-      toast.error("Please enter a delivery address");
-      return;
-    }
-
-    const userStr = localStorage.getItem("currentUser");
+  const handleCheckout = () => {
+    const userStr = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser");
     if (!userStr) {
       toast.error("Please login to checkout");
       router.push("/customer-login");
       return;
     }
-    const user = JSON.parse(userStr);
-
-    setIsSubmitting(true);
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          items: cartItems,
-          total: totalPrice,
-          address
-        }),
-      });
-
-      if (res.ok) {
-        setIsCheckingOut(true);
-        toast.success("Order placed successfully!");
-        setTimeout(() => {
-          localStorage.removeItem("cart");
-          setCartItems([]);
-          router.push("/customer-home");
-        }, 2000);
-      } else {
-        const data = await res.json();
-        toast.error(data.error || "Failed to place order");
-        setIsSubmitting(false);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong");
-      setIsSubmitting(false);
-    }
+    router.push('/payment');
   };
 
   return (
@@ -105,22 +65,9 @@ export default function CartPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <h2 className="text-3xl font-bold text-gray-900 mb-8">Your Shopping Cart</h2>
 
-        {isCheckingOut ? (
+        {cartItems.length === 0 ? (
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-green-100"
-          >
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
-              <CheckCircleIcon style={{ fontSize: 60, color: '#16a34a' }} />
-            </div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-2">Order Placed Successfully!</h3>
-            <p className="text-gray-500 text-lg">Thank you for shopping with AgroMart.</p>
-            <p className="text-sm text-gray-400 mt-4">Redirecting you to home...</p>
-          </motion.div>
-        ) : cartItems.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-dashed border-gray-300"
           >
@@ -192,17 +139,6 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Address</label>
-                  <textarea
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Enter your full address..."
-                    rows="3"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-4 focus:ring-green-500/20 outline-none transition-all bg-gray-50 resize-none text-sm"
-                  ></textarea>
-                </div>
-
                 <div className="border-t border-gray-100 pt-6 mb-8">
                   <div className="flex justify-between items-center font-bold text-2xl text-gray-900">
                     <span>Total</span>
@@ -211,10 +147,9 @@ export default function CartPage() {
                 </div>
                 <button 
                   onClick={handleCheckout}
-                  disabled={isSubmitting}
-                  className="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 transition-all shadow-lg hover:shadow-green-600/30 active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-green-600 text-white rounded-xl font-bold text-lg hover:bg-green-700 transition-all shadow-lg hover:shadow-green-600/30 active:scale-[0.99]"
                 >
-                  {isSubmitting ? "Processing..." : "Checkout Now"}
+                  Proceed to Payment
                 </button>
                 <p className="text-center text-xs text-gray-400 mt-4">
                   Secure checkout powered by AgroMart
