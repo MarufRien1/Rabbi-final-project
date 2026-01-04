@@ -81,7 +81,13 @@ export default function CustomerHomePage() {
 
           <div className="flex items-center gap-4">
             <button 
-              onClick={() => router.push('/')}
+              onClick={() => {
+                localStorage.removeItem("currentUser");
+                sessionStorage.removeItem("currentUser");
+                localStorage.removeItem("userType");
+                sessionStorage.removeItem("userType");
+                router.push('/');
+              }}
               className="flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-red-50 rounded-full transition-colors font-medium text-sm"
             >
               <LogoutIcon fontSize="small" /> Logout
